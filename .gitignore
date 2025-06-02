@@ -1,0 +1,4 @@
+.idea/*
+ddns-dotnet.sln.DotSettings.user
+ddns-dotnet/bin/*
+ddns-dotnet/obj/*
