@@ -1,0 +1,16 @@
+services:
+  ddns-dotnet:
+    build: .
+    restart: unless-stopped
+    volumes:
+      - ./logs:/app/logs
+    container_name: ddns-dotnet
+#    environment:
+#      # use these to override the appsettings.json properties if desired
+#      - AppSettings__CloudflareEmail=email
+#      - AppSettings__CloudflareApiKey=key
+#      - AppSettings__UpdateInterval=00:00:30.00 # 30s
+#      - AppSettings__AllowedHosts__0=https://api.ipify.org
+#      - AppSettings__AllowedHosts__1=https://icanhazip.com
+#      - AppSettings__AllowedHosts__2=https://ipecho.net/plain
+#      - AppSettings__DryRun=false

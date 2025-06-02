@@ -96,7 +96,7 @@ public class Ddns(IpLookup ipLookup,
     {
         email = configuration.GetAppSettings()?.CloudflareEmail ?? "";
         apiKey = configuration.GetAppSettings()?.CloudflareApiKey ?? "";
-        if (email is null or "" || !MailAddress.TryCreate(email, out var mailAddress))
+        if (email is null or "" || !MailAddress.TryCreate(email, out _))
         {
             logger.LogError("Invalid email address");
             return false;
