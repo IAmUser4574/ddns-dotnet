@@ -17,23 +17,32 @@ public class Ddns(IpLookup ipLookup,
 {
     private async Task RunDdns()
     {
-        string? currentIp = await ipLookup.GetAsync();
-        if (currentIp is null or "")
+        string? targetIp = await ipLookup.GetAsync();
+        if (targetIp is null or "")
         {
             logger.LogError("No current ip found.");
             return;
         }
-
-        var email = configuration.GetAppSettings()?.CloudflareEmail;
-        var apiKey = configuration.GetAppSettings()?.CloudflareApiKey;
-        if (!ConfigurationValidated(email, apiKey))
+        
+        if (!ConfigurationValidated(out string email, out string apiKey))
         {
             return;
         }
-        
+
+        await RunCloudflare(email, apiKey, targetIp);
+    }
+
+    /// <summary>
+    /// Get all Cloudflare zones and updated all out-of-date A records present with targetIp
+    /// </summary>
+    /// <param name="email"></param>
+    /// <param name="apiKey"></param>
+    /// <param name="targetIp"></param>
+    private async Task RunCloudflare(string email, string apiKey, string targetIp)
+    {
         using CloudFlareClient cloudFlareClient = new CloudFlareClient(
-            configuration.GetAppSettings()?.CloudflareEmail, 
-            configuration.GetAppSettings()?.CloudflareApiKey);
+            email, 
+            apiKey);
         // get cf api data, iterate over it, set A records if there isn't a match, confirm results
         CloudFlareResult<IReadOnlyList<Zone>>? zoneResults = await cloudFlareClient.Zones.GetAsync();
 
@@ -53,7 +62,7 @@ public class Ddns(IpLookup ipLookup,
             {
                 logger.LogInformation($"Evaluating A record '{aRecord.Name}', id: {aRecord.Id}, content: {aRecord.Content}");
 
-                if (aRecord.Content == currentIp) continue;
+                if (aRecord.Content == targetIp) continue;
                 
                 logger.LogInformation("A record needs updating.");
                 // create update A record
@@ -83,8 +92,10 @@ public class Ddns(IpLookup ipLookup,
         }
     }
 
-    private bool ConfigurationValidated(string? email, string? apiKey)
+    private bool ConfigurationValidated(out string email, out string apiKey)
     {
+        email = configuration.GetAppSettings()?.CloudflareEmail ?? "";
+        apiKey = configuration.GetAppSettings()?.CloudflareApiKey ?? "";
         if (email is null or "" || !MailAddress.TryCreate(email, out var mailAddress))
         {
             logger.LogError("Invalid email address");

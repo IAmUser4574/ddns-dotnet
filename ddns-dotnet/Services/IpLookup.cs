@@ -25,7 +25,6 @@ public class IpLookup(
             logger.LogWarning("No IP API sources configured.");
             return null;
         }
-
         if (sources.Count == 1)
         {
             logger.LogWarning("Multiple IP API sources required.");
