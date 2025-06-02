@@ -24,6 +24,5 @@ Global
 		{829E0059-91BA-4F9A-96E9-872EF14344CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{829E0059-91BA-4F9A-96E9-872EF14344CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{829E0059-91BA-4F9A-96E9-872EF14344CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{829E0059-91BA-4F9A-96E9-872EF14344CC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
