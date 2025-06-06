@@ -20,7 +20,7 @@ public class Ddns(IpLookup ipLookup,
         string? targetIp = await ipLookup.GetAsync();
         if (targetIp is null or "")
         {
-            logger.LogError("No current ip found.");
+            logger.LogError("No current ip found");
             return;
         }
         
@@ -64,25 +64,32 @@ public class Ddns(IpLookup ipLookup,
 
                 if (aRecord.Content == targetIp) continue;
                 
-                logger.LogInformation("A record needs updating.");
+                logger.LogInformation($"A record needs updating from {aRecord.Content} to {targetIp}");
                 // create update A record
                 ModifiedDnsRecord recordToUpdate = new ModifiedDnsRecord()
                 {
-                    Type = DnsRecordType.A,
-                    Content = aRecord.Content,
+                    // set the new IP
+                    Content = targetIp, 
+                    // leave the remaining fields undisturbed
+                    Type = aRecord.Type,
                     Name = aRecord.Name,
+                    Comment = aRecord.Comment,
+                    Tags = aRecord.Tags,
+                    Ttl = aRecord.Ttl,
+                    Proxied = aRecord.Proxied,
+                    Priority = aRecord.Priority,
                 };
 
                 if (configuration.GetAppSettings()!.DryRun)
                 {
-                    logger.LogInformation("Dry run, not updating any records.");
+                    logger.LogInformation("Dry run, not updating any records");
                     continue;
                 }
                 CloudFlareResult<DnsRecord>? updateRes = await cloudFlareClient.Zones.DnsRecords.UpdateAsync(zone.Id, aRecord.Id, recordToUpdate);
                 
                 if (updateRes.Success)
                 {
-                    logger.LogInformation($"Updated record {aRecord.Id} successfully.");
+                    logger.LogInformation($"Updated record {aRecord.Id} successfully");
                 }
                 else
                 {
