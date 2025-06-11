@@ -1,0 +1,16 @@
+{
+    "name": "ddns-dotnet",
+    "build": {
+        "dockerfile": "../Dockerfile.devcontainer"
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-dotnettools.csharp",
+                "ms-dotnettools.vscode-dotnet-runtime",
+                "ms-dotnettools.csdevkit"
+            ]
+        }
+    },
+    "postCreateCommand": "dotnet restore"
+}
