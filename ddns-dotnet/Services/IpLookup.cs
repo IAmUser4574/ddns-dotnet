@@ -7,11 +7,11 @@ namespace ddns_dotnet.Services;
 
 public class IpLookup(
     HttpClient httpClient,
-    IConfiguration config, 
+    IConfiguration config,
     ILogger<IpLookup> logger)
 {
-    private readonly Regex _ipv4Regex = new Regex(@"^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$"); 
-    
+    private readonly Regex _ipv4Regex = new Regex(@"^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$");
+
     /// <summary>
     /// Get current IPV4 via third party services
     /// </summary>
@@ -29,60 +29,68 @@ public class IpLookup(
         {
             logger.LogWarning("Multiple IP API sources required.");
             return null;
-            
+
         }
 
-        List<string> ipResults = new();
-        IEnumerable<Task<string?>> tasks = sources.Select(async source =>
+        try
         {
-            try
+            List<string> ipResults = new();
+            IEnumerable<Task<string?>> tasks = sources.Select(async source =>
             {
-                string ip = await httpClient.GetStringAsync(new Uri(source));
-                logger.LogInformation("Fetched IP from {source}: {ip}", source, ip);
-                return ip;
+                try
+                {
+                    string ip = await httpClient.GetStringAsync(new Uri(source));
+                    logger.LogInformation("Fetched IP from {source}: {ip}", source, ip);
+                    return ip;
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Failed to fetch IP from {source}", source);
+                    return null;
+                }
+            });
+
+            string?[] results = await Task.WhenAll(tasks);
+
+            // filter valid IPv4 addresses
+            foreach (string? ip in results)
+            {
+                if (string.IsNullOrWhiteSpace(ip))
+                {
+                    logger.LogInformation("Ignoring invalid IP: {ip}", ip);
+                    continue;
+                }
+
+                if (_ipv4Regex.IsMatch(ip))
+                {
+                    ipResults.Add(ip);
+                }
             }
-            catch (Exception ex)
+
+            if (ipResults.Count == 0)
             {
-                logger.LogWarning(ex, "Failed to fetch IP from {source}", source);
+                logger.LogWarning("No valid IPs retrieved from sources.");
                 return null;
             }
-        });
 
-        string?[] results = await Task.WhenAll(tasks);
+            // determine most frequent valid IP
+            IGrouping<string, string> mostCommonIp = ipResults
+                .GroupBy(ip => ip)
+                .OrderByDescending(g => g.Count())
+                .First();
 
-        // filter valid IPv4 addresses
-        foreach (string? ip in results)
-        {
-            if (string.IsNullOrWhiteSpace(ip))
+            if (mostCommonIp.Count() >= ipResults.Count - 1)
             {
-                logger.LogInformation("Ignoring invalid IP: {ip}", ip);
-                continue;
+                return mostCommonIp.Key;
             }
-            
-            if (_ipv4Regex.IsMatch(ip))
-            {
-                ipResults.Add(ip);
-            }
-        }
 
-        if (ipResults.Count == 0)
-        {
-            logger.LogWarning("No valid IPs retrieved from sources.");
+            logger.LogWarning("IP mismatch: not enough agreement among sources.");
             return null;
         }
-
-        // determine most frequent valid IP
-        IGrouping<string, string> mostCommonIp = ipResults
-            .GroupBy(ip => ip)
-            .OrderByDescending(g => g.Count())
-            .First();
-
-        if (mostCommonIp.Count() >= ipResults.Count - 1)
+        catch (Exception ex)
         {
-            return mostCommonIp.Key;
+            logger.LogError("Failed to GetAsync.\n{ex}", ex);
+            return null;
         }
-
-        logger.LogWarning("IP mismatch: not enough agreement among sources.");
-        return null;
     }
 }
