@@ -23,13 +23,20 @@ public class Ddns(IpLookup ipLookup,
             logger.LogError("No current ip found");
             return;
         }
-        
+
         if (!ConfigurationValidated(out string email, out string apiKey))
         {
             return;
         }
 
-        await RunCloudflare(email, apiKey, targetIp);
+        try
+        {
+            await RunCloudflare(email, apiKey, targetIp);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError($"Failed to RunCloudflare.\n{ex}");
+        }
     }
 
     /// <summary>
@@ -41,13 +48,14 @@ public class Ddns(IpLookup ipLookup,
     private async Task RunCloudflare(string email, string apiKey, string targetIp)
     {
         using CloudFlareClient cloudFlareClient = new CloudFlareClient(
-            email, 
+            email,
             apiKey);
+
         // get cf api data, iterate over it, set A records if there isn't a match, confirm results
         CloudFlareResult<IReadOnlyList<Zone>>? zoneResults = await cloudFlareClient.Zones.GetAsync();
 
-        if (zoneResults is null || 
-            !zoneResults.Success || 
+        if (zoneResults is null ||
+            !zoneResults.Success ||
             zoneResults.Result.Count == 0)
         {
             logger.LogError("Failed to find any zones in the Cloudflare API...");
@@ -63,13 +71,13 @@ public class Ddns(IpLookup ipLookup,
                 logger.LogInformation($"Evaluating A record '{aRecord.Name}', id: {aRecord.Id}, content: {aRecord.Content}");
 
                 if (aRecord.Content == targetIp) continue;
-                
+
                 logger.LogInformation($"A record needs updating from {aRecord.Content} to {targetIp}");
                 // create update A record
                 ModifiedDnsRecord recordToUpdate = new ModifiedDnsRecord()
                 {
                     // set the new IP
-                    Content = targetIp, 
+                    Content = targetIp,
                     // leave the remaining fields undisturbed
                     Type = aRecord.Type,
                     Name = aRecord.Name,
@@ -86,7 +94,7 @@ public class Ddns(IpLookup ipLookup,
                     continue;
                 }
                 CloudFlareResult<DnsRecord>? updateRes = await cloudFlareClient.Zones.DnsRecords.UpdateAsync(zone.Id, aRecord.Id, recordToUpdate);
-                
+
                 if (updateRes.Success)
                 {
                     logger.LogInformation($"Updated record {aRecord.Id} successfully");
@@ -114,7 +122,7 @@ public class Ddns(IpLookup ipLookup,
             logger.LogError("Invalid API Key");
             return false;
         }
-        
+
         return true;
     }
 
