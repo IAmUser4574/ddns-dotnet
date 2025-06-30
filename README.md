@@ -7,9 +7,9 @@
 
 ## Use
 * Clone repo
-* Update either the `appsettings.json` file or the `docker-compose.yml`'s environment section with your Cloudflare email and api key
+* Update either the `appsettings.json` file or the `docker-compose.yml`'s environment section with your Cloudflare api token (or email and api key)
 * Start and stop with compose:
   * `docker compose up -d`
   * `docker compose down`
-  * Must be in the project root directory (same level as the compose file) for these commands to work 
-* Logs can be tailed from the host either by file in the `logs/` directory or by stdout via `docker logs ddns-dotnet --follow` 
+  * Must be in the project root directory (same level as the compose file) for these commands to work
+* Logs can be tailed from the host either by file in the `logs/` directory or by stdout via `docker logs ddns-dotnet --follow`

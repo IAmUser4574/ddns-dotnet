@@ -40,14 +40,14 @@ public abstract class Program
 
         await _services.GetRequiredService<Application>().Run(args);
     }
-    
+
     private static IServiceProvider? _services;
-    
+
     public static TService? GetService<TService>()
     {
         return _services != null ? _services.GetService<TService>() : default;
     }
-    
+
     static IConfigurationRoot BuildConfig(IConfigurationBuilder builder)
     {
         builder.SetBasePath(Directory.GetCurrentDirectory())
@@ -60,8 +60,9 @@ public abstract class Program
 
 public class AppSettings
 {
-    public required string CloudflareEmail { get; init; }
-    public required string CloudflareApiKey { get; init; }
+    public string? CloudflareEmail { get; init; }
+    public string? CloudflareApiKey { get; init; }
+    public string? CloudflareApiToken { get; init; }
     public required TimeSpan UpdateInterval { get; init; }
     public required IReadOnlyList<string> Ipv4ApiSources { get; init; }
     public bool DryRun { get; init; }

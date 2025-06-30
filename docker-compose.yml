@@ -9,6 +9,7 @@ services:
 #      # use these to override the appsettings.json properties if desired
 #      - AppSettings__CloudflareEmail=email
 #      - AppSettings__CloudflareApiKey=key
+#      - AppSettings__CloudflareApiToken=token # use this OR email+key
 #      - AppSettings__UpdateInterval=00:00:30.00 # 30s
 #      - AppSettings__AllowedHosts__0=https://api.ipify.org
 #      - AppSettings__AllowedHosts__1=https://icanhazip.com

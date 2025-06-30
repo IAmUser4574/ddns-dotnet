@@ -24,14 +24,14 @@ public class Ddns(IpLookup ipLookup,
             return;
         }
 
-        if (!ConfigurationValidated(out string email, out string apiKey))
+        if (!ConfigurationValidated(out CloudflareCredentials cloudflareCredentials))
         {
             return;
         }
 
         try
         {
-            await RunCloudflare(email, apiKey, targetIp);
+            await RunCloudflare(cloudflareCredentials, targetIp);
         }
         catch (Exception ex)
         {
@@ -45,11 +45,11 @@ public class Ddns(IpLookup ipLookup,
     /// <param name="email"></param>
     /// <param name="apiKey"></param>
     /// <param name="targetIp"></param>
-    private async Task RunCloudflare(string email, string apiKey, string targetIp)
+    private async Task RunCloudflare(CloudflareCredentials credentials, string targetIp)
     {
-        using CloudFlareClient cloudFlareClient = new CloudFlareClient(
-            email,
-            apiKey);
+        using CloudFlareClient cloudFlareClient = credentials.Email is not null
+        ? new CloudFlareClient(credentials.Email, credentials.ApiKey)
+        : new CloudFlareClient(credentials.ApiToken);
 
         // get cf api data, iterate over it, set A records if there isn't a match, confirm results
         CloudFlareResult<IReadOnlyList<Zone>>? zoneResults = await cloudFlareClient.Zones.GetAsync();
@@ -107,20 +107,36 @@ public class Ddns(IpLookup ipLookup,
         }
     }
 
-    private bool ConfigurationValidated(out string email, out string apiKey)
+    private bool ConfigurationValidated(out CloudflareCredentials cloudflareCredentials)
     {
-        email = configuration.GetAppSettings()?.CloudflareEmail ?? "";
-        apiKey = configuration.GetAppSettings()?.CloudflareApiKey ?? "";
-        if (email is null or "" || !MailAddress.TryCreate(email, out _))
-        {
-            logger.LogError("Invalid email address");
-            return false;
-        }
+        cloudflareCredentials = new CloudflareCredentials(
+            configuration.GetAppSettings()?.CloudflareEmail,
+            configuration.GetAppSettings()?.CloudflareApiKey,
+            configuration.GetAppSettings()?.CloudflareApiToken);
 
-        if (apiKey is null or "")
+        // email/key
+        if (cloudflareCredentials.ApiToken is null or "")
         {
-            logger.LogError("Invalid API Key");
-            return false;
+            if (cloudflareCredentials.Email is null or "" || !MailAddress.TryCreate(cloudflareCredentials.Email, out _))
+            {
+                logger.LogError("Invalid email address");
+                return false;
+            }
+
+            if (cloudflareCredentials.ApiKey is null or "")
+            {
+                logger.LogError("Invalid API Key");
+                return false;
+            }
+        }
+        // token
+        else
+        {
+            if (cloudflareCredentials.ApiToken is null or "")
+            {
+                logger.LogError("Invalid API Token");
+                return false;
+            }
         }
 
         return true;
