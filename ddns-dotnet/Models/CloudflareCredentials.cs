@@ -1,0 +1,1 @@
+public record CloudflareCredentials(string? Email, string? ApiKey, string? ApiToken);

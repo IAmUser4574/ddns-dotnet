@@ -8,9 +8,8 @@
 
 ## Use
 * Clone the repo
-* Update either the `appsettings.json` file or the `docker-compose.yml`'s environment section with your Cloudflare email and api key
-  * Note that Cloudflare API *Key* is supported currently and not scoped Tokens 
+* Update either the `appsettings.json` file or the `docker-compose.yml`'s environment section with your Cloudflare api token (or email and api key)
 * Start and stop with compose:
   * `docker compose up -d`
   * `docker compose down`
-* Logs can be tailed from the host either by file in the `logs/` directory or by stdout via `docker logs ddns-dotnet --follow` 
+* Logs can be tailed from the host either by file in the `logs/` directory or by stdout via `docker logs ddns-dotnet --follow`
